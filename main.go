@@ -20,7 +20,7 @@ var produk = []Produk{
 	{ID: 1, Nama: "Nasi Goreng", Harga: 15000, Stok: 10, Category: "Makanan"},
 	{ID: 2, Nama: "Mie Tektek", Harga: 12000, Stok: 15, Category: "Makanan"},
 	{ID: 3, Nama: "Es Teh Manis", Harga: 5000, Stok: 20, Category: "Minuman"},
-	{ID: 4, Nama: "Jus Alpukat", Harga: 10000, Stok: 30, Category: "Miuman"},
+	{ID: 4, Nama: "Jus Alpukat", Harga: 10000, Stok: 30, Category: "Minuman"},
 }
 
 func getProdukByID(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +40,46 @@ func getProdukByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, "Produk belum ada", http.StatusNotFound)
+
+}
+
+func getAllCategory(w http.ResponseWriter, r *http.Request) {
+	categoryMap := make(map[string]bool)
+	var categories []string
+
+	for _, p := range produk {
+		if p.Category != "" {
+			categoryMap[p.Category] = true
+		}
+	}
+
+	for c := range categoryMap {
+		categories = append(categories, c)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(categories)
+}
+
+func getProdukByCategory(w http.ResponseWriter, r *http.Request) {
+	category := strings.TrimPrefix(r.URL.Path, "/api/category/")
+	category = strings.ToLower(category)
+
+	var result []Produk
+
+	for _, p := range produk {
+		if strings.ToLower(p.Category) == category {
+			result = append(result, p)
+		}
+	}
+
+	if len(result) == 0 {
+		http.Error(w, "Category tidak ditemukan", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
 
 // PUT localhost:8090/api/produk/{id}
@@ -137,6 +177,23 @@ func main() {
 			"status":  "OK",
 			"massage": "API Running",
 		})
+	})
+	// CATEGORY - GET ALL
+	http.HandleFunc("/api/category", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			getAllCategory(w, r)
+			return
+		}
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	})
+
+	// CATEGORY - BY NAME
+	http.HandleFunc("/api/category/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			getProdukByCategory(w, r)
+			return
+		}
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	})
 
 	fmt.Println("server running di localhost:8090")
