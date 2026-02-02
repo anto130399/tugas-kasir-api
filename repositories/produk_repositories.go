@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"test1/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,7 +16,6 @@ func NewProdukRepository(db *pgxpool.Pool) *ProdukRepository {
 	return &ProdukRepository{db: db}
 }
 
-// ================= Produk =================
 func (r *ProdukRepository) GetAll() ([]models.Produk, error) {
 	ctx := context.Background()
 	rows, err := r.db.Query(ctx, `
@@ -48,7 +48,7 @@ func (r *ProdukRepository) GetByID(id int) (*models.Produk, error) {
 		       c.id, c.name AS nama
 		FROM produk p
 		JOIN categories c ON c.id = p.category_id
-		WHERE p.id = $1
+		WHERE p.id=$1
 	`, id).Scan(&p.ID, &p.Nama, &p.Harga, &p.Stok, &p.CategoryID, &p.Category.ID, &p.Category.Nama)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (r *ProdukRepository) Create(p *models.Produk) error {
 	ctx := context.Background()
 	return r.db.QueryRow(ctx, `
 		INSERT INTO produk (nama, harga, stok, category_id)
-		VALUES ($1, $2, $3, $4)
+		VALUES ($1,$2,$3,$4)
 		RETURNING id
 	`, p.Nama, p.Harga, p.Stok, p.CategoryID).Scan(&p.ID)
 }
@@ -74,7 +74,7 @@ func (r *ProdukRepository) Update(p *models.Produk) error {
 		return err
 	}
 	if res.RowsAffected() == 0 {
-		return err
+		return fmt.Errorf("produk dengan id %d tidak ditemukan", p.ID)
 	}
 	return nil
 }
@@ -86,12 +86,11 @@ func (r *ProdukRepository) Delete(id int) error {
 		return err
 	}
 	if res.RowsAffected() == 0 {
-		return err
+		return fmt.Errorf("produk dengan id %d tidak ditemukan", id)
 	}
 	return nil
 }
 
-// ================= Category =================
 func (r *ProdukRepository) GetAllCategory() ([]models.Category, error) {
 	ctx := context.Background()
 	rows, err := r.db.Query(ctx, `SELECT id, name AS nama FROM categories ORDER BY id`)

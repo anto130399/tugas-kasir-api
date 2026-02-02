@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
+	"strings"
 
 	"test1/handlers"
 	"test1/repositories"
@@ -12,17 +12,32 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	// ===== ENV =====
-	dbConn := os.Getenv("DB_CONN")
+	// ===== Viper CONFIG =====
+	viper.SetConfigFile(".env")
+	viper.SetConfigType("env")
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Println("⚠️ Tidak menemukan file .env, pakai ENV variable")
+	}
+
+	dbConn := viper.GetString("DB_CONN")
 	if dbConn == "" {
 		log.Fatal("❌ DB_CONN kosong")
 	}
 
-	// DEBUG (boleh hapus nanti)
-	log.Println("DB HOST =", dbConn)
+	port := viper.GetString("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Println("DB Host:", dbConn)
+	log.Println("Port:", port)
 
 	// ===== DB CONNECT =====
 	ctx := context.Background()
@@ -34,14 +49,13 @@ func main() {
 
 	log.Println("✅ Database terkoneksi")
 
-	// ===== DEPENDENCY =====
+	// ===== INIT REPO, SERVICE, HANDLER =====
 	produkRepo := repositories.NewProdukRepository(dbpool)
 	produkService := services.NewProdukService(produkRepo)
 	produkHandler := handlers.NewProdukHandler(produkService)
 
 	// ===== ROUTER =====
 	r := mux.NewRouter()
-
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
@@ -54,12 +68,7 @@ func main() {
 	r.HandleFunc("/api/produk/{id}", produkHandler.DeleteProduk).Methods("DELETE")
 	r.HandleFunc("/api/produk/category", produkHandler.GetAllCategory).Methods("GET")
 
-	// ===== SERVER =====
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
+	// ===== START SERVER =====
 	log.Println("🚀 Server running on 0.0.0.0:" + port)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, r))
 }

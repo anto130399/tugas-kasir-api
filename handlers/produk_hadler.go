@@ -11,76 +11,120 @@ import (
 )
 
 type ProdukHandler struct {
-	Service *services.ProdukService
+	service *services.ProdukService
 }
 
 func NewProdukHandler(s *services.ProdukService) *ProdukHandler {
-	return &ProdukHandler{Service: s}
+	return &ProdukHandler{service: s}
 }
 
-// ------------------ METHOD HANDLER ------------------
+// ====================== PRODUK ======================
 
 func (h *ProdukHandler) GetAllProduk(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	produks, err := h.Service.GetAllProduk()
+
+	produks, err := h.service.GetAllProduk()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	json.NewEncoder(w).Encode(produks)
 }
 
 func (h *ProdukHandler) GetProdukByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	produk, err := h.Service.GetProdukByID(id)
+
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "ID tidak valid", http.StatusBadRequest)
 		return
 	}
+
+	produk, err := h.service.GetProdukByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if produk == nil {
+		http.Error(w, "Produk tidak ditemukan", http.StatusNotFound)
+		return
+	}
+
 	json.NewEncoder(w).Encode(produk)
 }
 
 func (h *ProdukHandler) CreateProduk(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
 	var p models.Produk
-	json.NewDecoder(r.Body).Decode(&p)
-	if err := h.Service.CreateProduk(&p); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		http.Error(w, "Request body tidak valid: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.service.CreateProduk(&p); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	json.NewEncoder(w).Encode(p)
 }
 
 func (h *ProdukHandler) UpdateProduk(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID tidak valid", http.StatusBadRequest)
+		return
+	}
+
 	var p models.Produk
-	json.NewDecoder(r.Body).Decode(&p)
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		http.Error(w, "Request body tidak valid: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	p.ID = id
-	if err := h.Service.UpdateProduk(&p); err != nil {
+	if err := h.service.UpdateProduk(&p); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	json.NewEncoder(w).Encode(p)
 }
 
 func (h *ProdukHandler) DeleteProduk(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	if err := h.Service.DeleteProduk(id); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID tidak valid", http.StatusBadRequest)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"message": "Produk berhasil dihapus"})
+
+	if err := h.service.DeleteProduk(id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
+
+// ====================== CATEGORY ======================
 
 func (h *ProdukHandler) GetAllCategory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	categories, err := h.Service.GetAllCategory()
+
+	categories, err := h.service.GetAllCategory()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	json.NewEncoder(w).Encode(categories)
 }
