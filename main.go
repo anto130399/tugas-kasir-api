@@ -41,6 +41,12 @@ func main() {
 
 	// ===== ROUTER =====
 	r := mux.NewRouter()
+
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
 	r.HandleFunc("/api/produk", produkHandler.GetAllProduk).Methods("GET")
 	r.HandleFunc("/api/produk/{id}", produkHandler.GetProdukByID).Methods("GET")
 	r.HandleFunc("/api/produk", produkHandler.CreateProduk).Methods("POST")
