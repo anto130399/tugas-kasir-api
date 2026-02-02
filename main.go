@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 
 	"test1/handlers"
 	"test1/repositories"
@@ -21,8 +22,10 @@ func main() {
 	viper.AddConfigPath(".")
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
-		log.Println("⚠️ .env tidak terbaca:", err)
+	// OPTIONAL: .env hanya untuk lokal
+	if _, err := os.Stat(".env"); err == nil {
+		viper.SetConfigFile(".env")
+		_ = viper.ReadInConfig()
 	}
 
 	dbConn := viper.GetString("DB_CONN")
@@ -62,6 +65,6 @@ func main() {
 		port = "8080"
 	}
 
-	log.Println("🚀 Server running at http://localhost:" + port)
-	log.Fatal(http.ListenAndServe(":"+port, r))
+	log.Println("🚀 Server running on 0.0.0.0:" + port)
+	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, r))
 }
