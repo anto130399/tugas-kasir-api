@@ -12,28 +12,16 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/spf13/viper"
 )
 
 func main() {
-	// ===== LOAD ENV =====
-	viper.SetConfigFile(".env")
-	viper.SetConfigType("env")
-	viper.AddConfigPath(".")
-	viper.AutomaticEnv()
-
-	// OPTIONAL: .env hanya untuk lokal
-	if _, err := os.Stat(".env"); err == nil {
-		viper.SetConfigFile(".env")
-		_ = viper.ReadInConfig()
-	}
-
-	dbConn := viper.GetString("DB_CONN")
+	// ===== ENV =====
+	dbConn := os.Getenv("DB_CONN")
 	if dbConn == "" {
-		log.Fatal("❌ DB_CONN kosong, cek .env")
+		log.Fatal("❌ DB_CONN kosong")
 	}
 
-	// DEBUG (sementara)
+	// DEBUG (boleh hapus nanti)
 	log.Println("DB HOST =", dbConn)
 
 	// ===== DB CONNECT =====
@@ -60,6 +48,7 @@ func main() {
 	r.HandleFunc("/api/produk/{id}", produkHandler.DeleteProduk).Methods("DELETE")
 	r.HandleFunc("/api/produk/category", produkHandler.GetAllCategory).Methods("GET")
 
+	// ===== SERVER =====
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
