@@ -60,7 +60,7 @@ func main() {
 	r.HandleFunc("/api/produk/{id}", produkHandler.DeleteProduk).Methods("DELETE")
 	r.HandleFunc("/api/produk/category", produkHandler.GetAllCategory).Methods("GET")
 
-	port := viper.GetString("PORT")
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
