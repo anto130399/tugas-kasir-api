@@ -91,21 +91,4 @@ func (r *ProdukRepository) Delete(id int) error {
 	return nil
 }
 
-func (r *ProdukRepository) GetAllCategory() ([]models.Category, error) {
-	ctx := context.Background()
-	rows, err := r.db.Query(ctx, `SELECT id, name AS nama FROM categories ORDER BY id`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
 
-	var categories []models.Category
-	for rows.Next() {
-		var c models.Category
-		if err := rows.Scan(&c.ID, &c.Nama); err != nil {
-			return nil, err
-		}
-		categories = append(categories, c)
-	}
-	return categories, nil
-}

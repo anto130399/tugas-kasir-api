@@ -6,16 +6,31 @@ import (
 )
 
 type ProdukService struct {
-	Repo *repositories.ProdukRepository
+	repo *repositories.ProdukRepository
 }
 
 func NewProdukService(repo *repositories.ProdukRepository) *ProdukService {
-	return &ProdukService{Repo: repo}
+	return &ProdukService{repo: repo}
 }
 
-func (s *ProdukService) GetAllProduk() ([]models.Produk, error)       { return s.Repo.GetAll() }
-func (s *ProdukService) GetProdukByID(id int) (*models.Produk, error) { return s.Repo.GetByID(id) }
-func (s *ProdukService) CreateProduk(p *models.Produk) error          { return s.Repo.Create(p) }
-func (s *ProdukService) UpdateProduk(p *models.Produk) error          { return s.Repo.Update(p) }
-func (s *ProdukService) DeleteProduk(id int) error                    { return s.Repo.Delete(id) }
-func (s *ProdukService) GetAllCategory() ([]models.Category, error)   { return s.Repo.GetAllCategory() }
+func (s *ProdukService) GetAllProduk() ([]models.Produk, error) {
+	return s.repo.GetAll()
+}
+
+func (s *ProdukService) GetProdukByID(id int) (*models.Produk, error) {
+	return s.repo.GetByID(id)
+}
+
+func (s *ProdukService) CreateProduk(p *models.Produk) error {
+	return s.repo.Create(p)
+}
+
+func (s *ProdukService) UpdateProduk(p *models.Produk) error {
+	return s.repo.Update(p)
+}
+
+func (s *ProdukService) DeleteProduk(id int) error {
+	return s.repo.Delete(id)
+}
+
+

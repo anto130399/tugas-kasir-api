@@ -54,19 +54,30 @@ func main() {
 	produkService := services.NewProdukService(produkRepo)
 	produkHandler := handlers.NewProdukHandler(produkService)
 
+	categoryRepo := repositories.NewCategoryRepository(dbpool)
+	categoryService := services.NewCategoryService(categoryRepo)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+
 	// ===== ROUTER =====
-	r := mux.NewRouter()
+	r := mux.NewRouter().StrictSlash(true)
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
 
+	// PRODUK
 	r.HandleFunc("/api/produk", produkHandler.GetAllProduk).Methods("GET")
 	r.HandleFunc("/api/produk/{id}", produkHandler.GetProdukByID).Methods("GET")
 	r.HandleFunc("/api/produk", produkHandler.CreateProduk).Methods("POST")
 	r.HandleFunc("/api/produk/{id}", produkHandler.UpdateProduk).Methods("PUT")
 	r.HandleFunc("/api/produk/{id}", produkHandler.DeleteProduk).Methods("DELETE")
-	r.HandleFunc("/api/produk/category", produkHandler.GetAllCategory).Methods("GET")
+
+	// CATEGORY
+	r.HandleFunc("/api/categories", categoryHandler.GetAllCategory).Methods("GET")
+	r.HandleFunc("/api/categories/{id}", categoryHandler.GetCategoryByID).Methods("GET")
+	r.HandleFunc("/api/categories", categoryHandler.CreateCategory).Methods("POST")
+	r.HandleFunc("/api/categories/{id}", categoryHandler.UpdateCategory).Methods("PUT")
+	r.HandleFunc("/api/categories/{id}", categoryHandler.DeleteCategory).Methods("DELETE")
 
 	// ===== START SERVER =====
 	log.Println("🚀 Server running on 0.0.0.0:" + port)
