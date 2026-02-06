@@ -21,7 +21,7 @@ func NewProdukHandler(service *services.ProdukService) *ProdukHandler {
 
 // GetAllProduk - GET /api/produk
 func (h *ProdukHandler) GetAllProduk(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("name")
+	name := r.URL.Query().Get("nama")
 	products, err := h.service.GetAllProduk(name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
