@@ -11,6 +11,7 @@ import (
 	"test1/services"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/viper"
 )
@@ -40,8 +41,19 @@ func main() {
 	log.Println("Port:", port)
 
 	// ===== DB CONNECT =====
+	// ===== DB CONNECT =====
 	ctx := context.Background()
-	dbpool, err := pgxpool.New(ctx, dbConn)
+	
+	// Parse URL ke Config object
+	dbConfig, err := pgxpool.ParseConfig(dbConn)
+	if err != nil {
+		log.Fatal("❌ Gagal parsing config DB:", err)
+	}
+
+	// Force Simple Protocol (Solusi Ampuh untuk Supabase Transacion Pooler)
+	dbConfig.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+	dbpool, err := pgxpool.NewWithConfig(ctx, dbConfig)
 	if err != nil {
 		log.Fatal("❌ Gagal konek DB:", err)
 	}
@@ -57,6 +69,10 @@ func main() {
 	categoryRepo := repositories.NewCategoryRepository(dbpool)
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
+
+	transactionRepo := repositories.NewTransactionRepository(dbpool)
+	transactionService := services.NewTransactionService(transactionRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
 
 	// ===== ROUTER =====
 	r := mux.NewRouter().StrictSlash(true)
@@ -78,6 +94,17 @@ func main() {
 	r.HandleFunc("/api/categories", categoryHandler.CreateCategory).Methods("POST")
 	r.HandleFunc("/api/categories/{id}", categoryHandler.UpdateCategory).Methods("PUT")
 	r.HandleFunc("/api/categories/{id}", categoryHandler.DeleteCategory).Methods("DELETE")
+
+	// TRANSACTION
+	r.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
+
+	// ===== DEBUG ROUTES =====
+	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		pathTemplate, _ := route.GetPathTemplate()
+		methods, _ := route.GetMethods()
+		log.Printf("Route: %s Methods: %v\n", pathTemplate, methods)
+		return nil
+	})
 
 	// ===== START SERVER =====
 	log.Println("🚀 Server running on 0.0.0.0:" + port)

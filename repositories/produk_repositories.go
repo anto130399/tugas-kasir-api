@@ -16,14 +16,22 @@ func NewProdukRepository(db *pgxpool.Pool) *ProdukRepository {
 	return &ProdukRepository{db: db}
 }
 
-func (r *ProdukRepository) GetAll() ([]models.Produk, error) {
+func (r *ProdukRepository) GetAll(name string) ([]models.Produk, error) {
 	ctx := context.Background()
-	rows, err := r.db.Query(ctx, `
+	query := `
 		SELECT p.id, p.nama, p.harga, p.stok, p.category_id,
 		       c.id, c.name AS nama
 		FROM produk p
 		JOIN categories c ON c.id = p.category_id
-	`)
+	`
+	
+	var args []interface{}
+	if name != "" {
+		query += " WHERE p.nama ILIKE $1"
+		args = append(args, "%"+name+"%")
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
