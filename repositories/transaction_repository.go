@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"test1/models"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -103,4 +104,31 @@ func (r *TransactionRepository) CreateTransaction(items []models.CheckoutItem) (
 		TotalAmount: totalAmount,
 		Details:     details,
 	}, nil
+}
+
+func (r *TransactionRepository) GetTransactionsByDate(date time.Time) ([]models.Transaction, error) {
+	ctx := context.Background()
+
+	// Query transactions created on the specific date
+	// We use DATE(created_at) to compare just the date part
+	rows, err := r.db.Query(ctx, `
+		SELECT id, total_amount 
+		FROM transactions 
+		WHERE DATE(created_at) = DATE($1)
+	`, date)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []models.Transaction
+	for rows.Next() {
+		var t models.Transaction
+		if err := rows.Scan(&t.ID, &t.TotalAmount); err != nil {
+			return nil, err
+		}
+		transactions = append(transactions, t)
+	}
+
+	return transactions, nil
 }

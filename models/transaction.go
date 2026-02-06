@@ -24,3 +24,10 @@ type CheckoutItem struct {
 	ProdukID int `json:"produk_id"`
 	Quantity int `json:"quantity"`
 }
+
+type DailyReport struct {
+	Date              string        `json:"date"`
+	TotalSales        int           `json:"total_sales"`
+	TotalTransactions int           `json:"total_transactions"`
+	Transactions      []Transaction `json:"transactions"`
+}

@@ -97,6 +97,7 @@ func main() {
 
 	// TRANSACTION
 	r.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
+	r.HandleFunc("/api/report/hari-ini", transactionHandler.GetDailyReport).Methods("GET")
 
 	// ===== DEBUG ROUTES =====
 	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
